@@ -1,4 +1,6 @@
-from anki_generator.cli import run_cli
+import sys
+
+from anki_generator.cli import main
 
 if __name__ == "__main__":
-    run_cli()
+    sys.exit(main())

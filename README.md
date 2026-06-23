@@ -106,6 +106,36 @@ Let's say you want to study a Word document about "Brazilian History" and a YouT
 
 ---
 
+## 3.1. Non-Interactive (Scriptable) Mode
+
+Running `anki-generator` with no source flags launches the interactive wizard described above. If you instead pass `--file` and/or `--youtube`, the program runs **without any prompts**, so it can be scripted, scheduled (cron), or used in CI.
+
+```bash
+# A single PDF in the content/ folder, 10 English cards, offline .apkg
+anki-generator --file lecture.pdf --count 10 --language en --deck "Biology"
+
+# Multiple sources + audio, pushed straight into Anki via AnkiConnect
+anki-generator \
+  -f notes.docx -f chapter.pdf \
+  -y "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
+  --modality audio --export online --deck "History"
+```
+
+| Flag | Alias | Values | Default | Notes |
+| --- | --- | --- | --- | --- |
+| `--file` | `-f` | path or name in `content/` | – | Repeatable. `.docx` / `.pdf`. |
+| `--youtube` | `-y` | URL | – | Repeatable. |
+| `--count` | `-n` | integer | *Gemini suggestion* | If omitted, Gemini suggests a count. |
+| `--language` | `-l` | `portuguese`/`pt`, `english`/`en`, `spanish`/`es` | `portuguese` | |
+| `--modality` | `-m` | `text`, `audio` | `text` | `audio` adds TTS. |
+| `--export` | `-e` | `offline`, `online` | `offline` | `online` uses AnkiConnect (with offline fallback). |
+| `--deck` | `-d` | string | `Estudos` | Output deck / `.apkg` name. |
+| `--non-interactive` | | flag | off | Force non-interactive mode (implied by `--file`/`--youtube`). |
+
+At least one source (`--file` or `--youtube`) is required. The command exits with status `0` on success and `1` on a validation or API error, so it composes cleanly in shell pipelines. Run `anki-generator --help` for the full reference.
+
+---
+
 ## 4. Technical Guide (For Developers)
 
 If you are a developer who wants to run tests, modify code, or contribute:

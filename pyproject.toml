@@ -33,7 +33,7 @@ dependencies = [
 ]
 
 [project.scripts]
-anki-generator = "anki_generator.cli:run_cli"
+anki-generator = "anki_generator.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["anki_generator*"]
