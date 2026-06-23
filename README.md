@@ -1,139 +1,146 @@
-# anki_generator - Gerador Automático de Cartões Anki via Inteligência Artificial
+# anki_generator - Automatic Anki Flashcard Generator via Artificial Intelligence
 
-O **anki_generator** é um programa em Python que automatiza a criação de cartões de estudo (flashcards) para o aplicativo Anki. Ele lê seus materiais de estudo (resumos no Word, livros em PDF ou vídeo-aulas do YouTube), extrai as informações mais importantes e gera cartões contendo perguntas no anverso (frente) e respostas acompanhadas de áudio (voz) no verso.
-
----
-
-## 1. O que é o Anki e como este programa ajuda você?
-
-O **Anki** é um aplicativo de memorização baseado em cartões de estudo (frente e verso) com repetição espaçada. Criar esses cartões manualmente pode consumir muito tempo. 
-Este programa resolve isso: ele funciona como um assistente virtual que:
-1.  **Lê seus textos** (Word ou PDF) ou **escuta vídeo-aulas** do YouTube (através da transcrição de legendas).
-2.  **Identifica os principais tópicos** e cria perguntas e respostas no idioma que você escolher (Português, Inglês ou Espanhol) usando temperatura de 0.1 para maior consistência e controle da IA.
-3.  **Gera uma voz de leitura** para a resposta de cada cartão, para que você possa estudar ouvindo a pronúncia correta (ideal para o aprendizado de idiomas).
-4.  **Permite digitação de respostas (Type-in-the-Answer)**: Os cartões são configurados para que você possa digitar sua resposta diretamente no Anki, oferecendo uma comparação visual colorida (verde para correto, vermelho para discrepâncias) ao revelar a resposta.
-5.  **Cria um baralho com nome customizado**: Você escolhe o nome do baralho diretamente pela CLI, e o programa gera o arquivo `.apkg` com esse nome exato.
-6.  **Cria um arquivo pronto** que você só precisa dar dois cliques para importar diretamente para dentro do seu Anki (ou envia diretamente caso use o AnkiConnect).
+**anki_generator** is a Python command-line utility that automates the creation of study flashcards for the Anki application. It reads your study materials (Word summaries, PDF textbooks, or YouTube lectures), extracts the most critical information, and generates flashcards containing questions on the front and answers accompanied by high-quality speech audio on the back.
 
 ---
 
-## 2. Guia Passo a Passo para Iniciantes (Sem Conhecimento Técnico)
+## 1. What is Anki and how does this tool help you?
 
-Se você nunca usou programas de terminal em Python, siga este passo a passo simplificado para configurar e rodar o programa no seu computador.
+**Anki** is a popular spaced-repetition flashcard application. Manually creating cards is a tedious and time-consuming task. 
+This program acts as a virtual study assistant that:
+1.  **Reads your texts** (Word or PDF files) or **listens to YouTube lectures** (via subtitle transcript extraction).
+2.  **Identifies key topics** and generates clean questions and answers in your chosen language (Portuguese, English, or Spanish) using a low model temperature of 0.1 to guarantee highly deterministic and consistent AI outputs.
+3.  **Generates spoken audio** for the answer of each card, so you can study by listening to correct pronunciation (ideal for language acquisition).
+4.  **Enables typed answers (Type-in-the-Answer)**: The flashcards are pre-configured to let you type your response directly into Anki. When you reveal the card, it displays a side-by-side color comparison (green for matches, red for spelling discrepancies or omissions).
+5.  **Creates custom-named decks**: You specify the deck name directly inside the terminal CLI, and the program will build the `.apkg` package with that exact name.
+6.  **Produces ready-to-import files**: Generates a file you can double-click to import into Anki, or pushes notes directly into your collection using AnkiConnect.
 
-### Passo 1: Instalar o Python
-O programa precisa do Python instalado em seu computador para rodar.
-*   **Windows:** Baixe e instale a versão mais recente do Python a partir do site oficial: [python.org](https://www.python.org/downloads/). Durante a instalação, **certifique-se de marcar a caixinha "Add Python.exe to PATH"** antes de clicar em instalar.
+---
 
-### Passo 2: Obter sua chave de API do Gemini (Gratuita)
-Para que a Inteligência Artificial do Google leia seus materiais e crie as perguntas, você precisa de uma chave de API (uma senha de acesso para desenvolvedores).
-1.  Acesse o site do [Google AI Studio](https://aistudio.google.com/).
-2.  Faça login com sua conta do Google (Gmail).
-3.  Clique no botão **"Get API key"** (Obter chave de API).
-4.  Clique em **"Create API key"** e copie o código gerado (uma sequência longa de letras e números). **Guarde este código.**
+## 2. Step-by-Step Guide for Beginners (No Technical Background)
 
-### Passo 3: Preparar a Pasta do Projeto
-1.  Abra a pasta onde você baixou este projeto.
-2.  Crie duas novas pastas na raiz (na mesma pasta onde está o arquivo `main.py`):
-    *   **`content`**: Coloque aqui os seus arquivos de texto que deseja estudar (seus resumos em `.docx` ou apostilas em `.pdf`).
-    *   **`results`**: É aqui que o programa colocará o arquivo de estudos finalizado.
-3.  Crie um novo arquivo de texto simples usando o Bloco de Notas, cole sua chave de API nele no seguinte formato, e salve o arquivo com o nome exato de `.env`:
+If you have never worked with command-line tools or Python before, follow these simplified steps to set up and run the generator on your system.
+
+### Step 1: Install Python
+The program requires Python to be installed on your computer.
+*   **Windows:** Download and install the latest stable version of Python from [python.org](https://www.python.org/downloads/). During the installation wizard, **make sure to check the box that says "Add Python.exe to PATH"** before clicking Install.
+
+### Step 2: Obtain your Google Gemini API Key (Free)
+To allow Google's AI to scan your materials and construct questions, you need an API key.
+1.  Visit [Google AI Studio](https://aistudio.google.com/).
+2.  Log in using your standard Google/Gmail account.
+3.  Click the **"Get API key"** button.
+4.  Click **"Create API key"** and copy the long string of letters and numbers. **Keep this code secure.**
+
+### Step 3: Prepare the Project Directory
+1.  Open the folder where you downloaded this project.
+2.  Create two new folders in the root directory (the same folder where `main.py` is located):
+    *   **`content`**: Place the documents you want to study here (e.g., `.docx` summaries, lecture notes, or `.pdf` files).
+    *   **`results`**: This is where the final study package will be exported.
+3.  Create a new text file using Notepad, paste your API key inside it in the format shown below, and save the file with the exact name `.env`:
     ```env
-    GEMINI_API_KEY="COLE_SUA_CHAVE_AQUI"
+    # Google Gemini API Key (required)
+    GEMINI_API_KEY="PASTE_YOUR_API_KEY_HERE"
+
+    # Optional settings
+    ANKI_CONNECT_URL="http://localhost:8765"
+    LOG_LEVEL="INFO"
     ```
 
-### Passo 4: Rodar o programa pela primeira vez
-1.  Abra o terminal do seu computador (no Windows, abra a pasta do projeto, clique na barra de endereços do explorador de arquivos, digite `cmd` e aperte Enter).
-2.  Crie um ambiente isolado digitando os seguintes comandos no terminal:
+### Step 4: Run the Program for the First Time
+1.  Open your command prompt/terminal (on Windows, open the project folder in File Explorer, click the address bar, type `cmd`, and press Enter).
+2.  Set up an isolated virtual environment and activate it by running:
     ```bash
     python -m venv .venv
     .venv\Scripts\activate
     ```
-3.  Instale o programa digitando o seguinte comando:
+3.  Install the package by typing:
     ```bash
     pip install .
     ```
-4.  Coloque seus resumos de estudo dentro da pasta `content` criada anteriormente.
-5.  Inicie a criação de cartões rodando o comando:
+4.  Ensure your study documents are inside the `content` directory.
+5.  Execute the generator:
     ```bash
     anki-generator
     ```
 
 ---
 
-## 3. Exemplo Prático de Uso (Na Prática)
+## 3. Practical Usage Example (In Action)
 
-Imagine que você quer estudar um resumo sobre "História do Brasil" em Word e uma vídeo-aula de inglês do YouTube.
+Let's say you want to study a Word document about "Brazilian History" and a YouTube English grammar lesson.
 
-1.  Você coloca o arquivo `resumo_historia.docx` na pasta `content/`.
-2.  Abre o terminal e roda: `anki-generator`.
-3.  O programa iniciará um diálogo interativo:
-    *   **Pergunta:** *Selecione os arquivos locais para processar:* 
-        *   Você marca a caixinha correspondente ao `resumo_historia.docx`.
-    *   **Pergunta:** *Insira URLs do YouTube (separadas por vírgula):*
-        *   Você digita ou cola a URL do vídeo: `https://www.youtube.com/watch?v=dQw4w9WgXcQ`.
-    *   **Etapa Automática:** O programa lê o documento, extrai a legenda do vídeo do YouTube e faz uma análise rápida.
-    *   **Sugestão na Tela:** O programa exibe uma tabela identificando que encontrou temas como "Independência do Brasil" e "Gramática de Inglês", sugerindo a criação de 8 cartões de estudo.
-    *   **Pergunta:** *Quantos cartões de estudo você deseja gerar?*
-        *   Você apenas aperta Enter para aceitar a recomendação de 8 cartões (ou digita outro número de sua preferência).
-    *   **Pergunta:** *Selecione o idioma de geração dos cartões:*
-        *   Você escolhe `Português` (ou `Inglês` se quiser as perguntas e respostas escritas e faladas em inglês).
-    *   **Pergunta:** *Selecione a modalidade dos cartões:*
-        *   Você seleciona `Texto + Áudio (TTS)` para gerar a narração de voz.
-    *   **Pergunta:** *Selecione a forma de exportação para o Anki:*
-        *   Você escolhe `genanki (offline .apkg)`.
-    *   **Pergunta:** *Qual o nome do baralho (deck) do Anki que deseja criar?*
-        *   Você digita o nome desejado, por exemplo `Historia do Brasil` (ou aceita o padrão `Estudos`).
-4.  **Conclusão:** O programa roda o Gemini (com temperatura calibrada em `0.1` para manter a alta consistência), cria os cartões com áudio, limpa os arquivos temporários e exibe uma tabela de resumo.
-5.  O seu arquivo de estudos finalizado estará salvo na pasta `results/` com o nome `{NomeDoBaralho}.apkg` (no nosso exemplo, `Historia do Brasil.apkg`).
-6.  **Como Estudar:** 
-    *   Abra o seu aplicativo Anki no computador ou celular, vá em **Arquivo > Importar** (ou dê dois cliques no arquivo `.apkg`) e selecione o arquivo gerado.
-    *   Ao estudar esse baralho, o Anki exibirá a pergunta acompanhada de uma **caixa de digitação**. Digite a sua resposta nela.
-    *   Clique em **Mostrar Resposta**. O Anki fará uma comparação instantânea realçando em **verde** o que você acertou e em **vermelho** o que errou ou faltou.
-    *   O áudio de pronúncia da resposta será executado automaticamente.
-    *   Por fim, clique nos botões clássicos do Anki (**Again** / **Hard** / **Good** / **Easy**) de acordo com a sua facilidade de memorização para programar a repetição espaçada.
+1.  Place the `brazilian_history.docx` file inside the `content/` folder.
+2.  Open your terminal and run: `anki-generator`.
+3.  The CLI will launch an interactive wizard:
+    *   **Prompt:** *Selecione os arquivos locais para processar (Select local files to process):* 
+        *   Check the box next to `brazilian_history.docx` using spacebar, then press Enter.
+    *   **Prompt:** *Insira URLs do YouTube (separadas por vírgula) [Opcional] (Enter YouTube URLs):*
+        *   Paste the video link: `https://www.youtube.com/watch?v=dQw4w9WgXcQ` and press Enter.
+    *   **Automatic Parsing:** The app extracts text from the document, downloads the YouTube subtitles, and feeds them into a quick content analysis.
+    *   **Suggestions Table:** A structured table appears on your screen highlighting topics found (e.g., "Brazilian Independence" and "English Grammar") and suggests generating 8 flashcards.
+    *   **Prompt:** *Quantos cartões de estudo você deseja gerar? (How many cards to generate?)*
+        *   Press Enter to accept the recommendation of 8 (or type in a different count).
+    *   **Prompt:** *Selecione o idioma de geração dos cartões (Select language):*
+        *   Select `Português` (or `Inglês`/`Espanhol` if you are generating cards in those languages).
+    *   **Prompt:** *Selecione a modalidade dos cartões (Select modality):*
+        *   Choose `Texto + Áudio (TTS)` to include spoken audio.
+    *   **Prompt:** *Selecione a forma de exportação para o Anki (Select export destination):*
+        *   Choose `genanki (offline .apkg)` (to generate a local file) or `AnkiConnect (online via API)` (to sync directly into an active Anki Desktop program).
+    *   **Prompt:** *Qual o nome do baralho (deck) do Anki que deseja criar? (Name of the deck):*
+        *   Type the name you want, like `Brazilian History` (or accept the default `Estudos`).
+4.  **Completion:** The program calls the Gemini API (at temperature `0.1` for maximum accuracy) to compose structured JSON questions/answers and TTS voice files. It then attempts to export. If online export via `AnkiConnect` fails (e.g. if Anki is closed), the program runs a **safety offline fallback** to generate the `.apkg` file, cleans up the local temporary audio files, and prints a final execution table.
+5.  Your output package will be available in the `results/` folder under `{DeckName}.apkg` (e.g. `Brazilian History.apkg`).
+6.  **How to Study:** 
+    *   Open your Anki Desktop or mobile app, select **File > Import** (or double-click the `.apkg` file), and import the package.
+    *   When reviewing the cards, Anki will display the question alongside a **text input box**. Type your answer.
+    *   Click **Show Answer**. Anki compares your text against the solution, coloring matches in **green** and mismatches in **red**.
+    *   The spoken audio pronunciation of the answer plays automatically.
+    *   Select the standard memory rating buttons (**Again** / **Hard** / **Good** / **Easy**) to schedule your cards.
 
 ---
 
-## 4. Guia Técnico (Para Desenvolvedores)
+## 4. Technical Guide (For Developers)
 
-Se você é desenvolvedor e deseja realizar modificações ou rodar os testes automatizados:
+If you are a developer who wants to run tests, modify code, or contribute:
 
-### Instalação Editável
+### Editable Installation
 ```bash
 pip install -e .
 ```
 
-### Estrutura do Módulo de Código
-*   `anki_generator/config.py`: Gestão de variáveis e validação do ambiente via `pydantic-settings`.
-*   `anki_generator/models.py`: Modelos Pydantic v2 para contratos de dados estruturados.
-*   `anki_generator/extractors.py`: Extratores para `.docx`, `.pdf` e YouTube transcripts.
-*   `anki_generator/gemini_client.py`: Clientes de API do Gemini para texto e síntese de voz (TTS).
-*   `anki_generator/anki_exporter.py`: Módulos de exportação genanki / AnkiConnect.
-*   `anki_generator/cli.py`: Orquestrador CLI baseado em `questionary` e `rich`.
+### Module Structure
+*   `anki_generator/config.py`: Environment and settings parser leveraging `pydantic-settings`.
+*   `anki_generator/models.py`: Pydantic v2 data models for type-safe validation.
+*   `anki_generator/extractors.py`: Document extractors for `.docx`, `.pdf`, and YouTube transcript scrubbing.
+*   `anki_generator/gemini_client.py`: API wrappers for Google Gemini text and synthesis (TTS) models.
+*   `anki_generator/anki_exporter.py`: Export pipeline supporting `genanki` and local `AnkiConnect` API calls.
+*   `anki_generator/cli.py`: Interactive command-line terminal controller using `questionary` and `rich`.
 
-### Executando Testes e Qualidade de Código
-O projeto exige 100% de conformidade com tipagem estática e formatação.
+### Testing and Quality Assurance
+All additions must achieve 100% compliance with static types and styling.
 
 ```bash
-# Executa linter de formatação
+# Run code syntax and formatting linters
 ruff check .
 ruff format --check .
 
-# Executa checagem de tipos estática estrita
+# Run strict type checking
 mypy anki_generator --strict
 
-# Executa testes unitários e de integração com cobertura de código
+# Run tests and evaluate coverage limits
 pytest --cov=anki_generator --cov-fail-under=80
 ```
 
 ---
 
-## 5. Resolução de Problemas Frequentes
+## 5. Troubleshooting
 
-*   **Erro: `ValidationError` / Chave de API não configurada:**
-    Certifique-se de que criou o arquivo `.env` exatamente com esse nome (sem extensão `.txt` no final) e inseriu a variável `GEMINI_API_KEY` corretamente nele.
-*   **Vídeo do YouTube falha na extração de texto:**
-    A extração do YouTube consome as legendas do vídeo. Se o vídeo não tiver legendas geradas automaticamente ou criadas pelo autor, a extração falhará. O programa avisará você e permitirá continuar usando apenas os arquivos da pasta `content/`.
-*   **O som do cartão não toca no Anki:**
-    Certifique-se de que os alto-falantes estão ligados. Os áudios são importados no formato de mídia nativa do Anki. Se estiver usando o modo AnkiConnect, certifique-se de que o aplicativo Anki Desktop estava aberto no momento em que você gerou os cartões.
+*   **Error: `ValidationError` / API key not set:**
+    Verify your `.env` file is named exactly `.env` (no trailing `.txt` extensions) and contains the correct `GEMINI_API_KEY` configuration line.
+*   **YouTube extraction failure:**
+    YouTube scraping relies on subtitle tracks. If a video has no caption tracks (auto-generated or manually uploaded by the author), extraction fails. The app will warn you and allow you to proceed using your local `content/` folder files.
+*   **AnkiConnect Error / Offline Fallback:**
+    If you chose direct export via `AnkiConnect` but your Anki Desktop is closed or lacks the AnkiConnect add-on listening on port `8765`, the console prints a warning and falls back to saving a `.apkg` file in your `results/` directory automatically.
+*   **Audio does not play in Anki:**
+    Check your sound output settings. Audio is synthesized by the `gemini-3.1-flash-tts-preview` model, saved as a WAV file, and packaged inside Anki. If using AnkiConnect, make sure Anki Desktop was running during generation so it could register media assets.
