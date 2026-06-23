@@ -22,4 +22,4 @@ Projeto de pipeline interativa em Python que ingere documentos DOCX, PDF e trans
 - **M4: Anki Exporter**: Concluído (Testes unitários verdes, cobertura 89%, Ruff/Mypy OK).
 - **M5: CLI & Integração**: Concluído (Testes unitários/integração verdes, cobertura 72% localmente/86% global, Ruff/Mypy OK).
 - **Empacotamento e Distribuição**: Concluído (pyproject.toml configurado, comando global anki-generator ativado via pip).
-- **Recursos Adicionais**: Seleção de nome customizado do baralho (deck) do Anki na CLI e configuração de "Type-in-the-Answer" (resposta digitada) no template dos cartões gerados. Cobertura de testes global em 86.21%, com Ruff e Mypy 100% OK.
+- **Recursos Adicionais**: Seleção de nome customizado do baralho (deck) do Anki na CLI, configuração de "Type-in-the-Answer" (resposta digitada) no template dos cartões gerados, e fallback automático de exportação offline (.apkg) em caso de falha de conexão do AnkiConnect. Cobertura de testes global em 86.56%, com Ruff e Mypy 100% OK.
