@@ -80,6 +80,7 @@ class GeminiClient:
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=ThemeSuggestion,
+            temperature=0.1,
         )
         response = self._generate_with_retry(
             model="gemini-3.5-flash",
@@ -104,6 +105,7 @@ class GeminiClient:
         config = types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=FlashcardCollection,
+            temperature=0.1,
         )
         response = self._generate_with_retry(
             model="gemini-3.5-flash",
