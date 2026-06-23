@@ -1,0 +1,20 @@
+# Variáveis de ambiente
+.env
+
+# Diretórios locais de dados do usuário (ignorar arquivos, exceto .gitkeep)
+content/*
+!content/.gitkeep
+results/*
+!results/.gitkeep
+
+# Cache do Python e builds
+.coverage
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
