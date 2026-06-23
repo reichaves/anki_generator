@@ -30,7 +30,7 @@ GEMINI_API_KEY="AIzaSyYourActualApiKeyHere"
 ## 3. Padrões de Uso do SDK (`google-genai==0.8.0`)
 
 ### A. Geração Estruturada (Modelo de Texto)
-Para garantir que a saída de geração de temas e cartões respeite os schemas rígidos definidos, o SDK utiliza parâmetros de configuração em JSON com a estrutura do Pydantic v2.
+Para garantir que a saída de geração de temas e cartões respeite os schemas rígidos definidos de forma consistente e com alto determinismo, o SDK utiliza parâmetros de configuração em JSON com a estrutura do Pydantic v2 e define a **temperatura explicitamente em 0.1**.
 
 ```python
 from google import genai
@@ -42,6 +42,7 @@ client = genai.Client()
 config = types.GenerateContentConfig(
     response_mime_type="application/json",
     response_schema=FlashcardCollection,
+    temperature=0.1,
 )
 
 response = client.models.generate_content(

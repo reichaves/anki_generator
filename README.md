@@ -9,9 +9,11 @@ O **anki_generator** é um programa em Python que automatiza a criação de cart
 O **Anki** é um aplicativo de memorização baseado em cartões de estudo (frente e verso) com repetição espaçada. Criar esses cartões manualmente pode consumir muito tempo. 
 Este programa resolve isso: ele funciona como um assistente virtual que:
 1.  **Lê seus textos** (Word ou PDF) ou **escuta vídeo-aulas** do YouTube (através da transcrição de legendas).
-2.  **Identifica os principais tópicos** e cria perguntas e respostas no idioma que você escolher (Português, Inglês ou Espanhol).
+2.  **Identifica os principais tópicos** e cria perguntas e respostas no idioma que você escolher (Português, Inglês ou Espanhol) usando temperatura de 0.1 para maior consistência e controle da IA.
 3.  **Gera uma voz de leitura** para a resposta de cada cartão, para que você possa estudar ouvindo a pronúncia correta (ideal para o aprendizado de idiomas).
-4.  **Cria um arquivo pronto** (`.apkg`) que você só precisa dar dois cliques para importar diretamente para dentro do seu Anki.
+4.  **Permite digitação de respostas (Type-in-the-Answer)**: Os cartões são configurados para que você possa digitar sua resposta diretamente no Anki, oferecendo uma comparação visual colorida (verde para correto, vermelho para discrepâncias) ao revelar a resposta.
+5.  **Cria um baralho com nome customizado**: Você escolhe o nome do baralho diretamente pela CLI, e o programa gera o arquivo `.apkg` com esse nome exato.
+6.  **Cria um arquivo pronto** que você só precisa dar dois cliques para importar diretamente para dentro do seu Anki (ou envia diretamente caso use o AnkiConnect).
 
 ---
 
@@ -80,9 +82,16 @@ Imagine que você quer estudar um resumo sobre "História do Brasil" em Word e u
         *   Você seleciona `Texto + Áudio (TTS)` para gerar a narração de voz.
     *   **Pergunta:** *Selecione a forma de exportação para o Anki:*
         *   Você escolhe `genanki (offline .apkg)`.
-4.  **Conclusão:** O programa roda o Gemini, cria os cartões com áudio, limpa os arquivos temporários e exibe uma tabela de resumo.
-5.  O seu arquivo de estudos finalizado estará salvo na pasta `results/` com o nome `anki_generator_deck.apkg`.
-6.  **Como Estudar:** Abra o seu aplicativo Anki no computador ou celular, vá em **Arquivo > Importar** (ou dê dois cliques no arquivo `.apkg`) e selecione o arquivo. O baralho com as perguntas, respostas e áudios de pronúncia estará pronto para uso.
+    *   **Pergunta:** *Qual o nome do baralho (deck) do Anki que deseja criar?*
+        *   Você digita o nome desejado, por exemplo `Historia do Brasil` (ou aceita o padrão `Estudos`).
+4.  **Conclusão:** O programa roda o Gemini (com temperatura calibrada em `0.1` para manter a alta consistência), cria os cartões com áudio, limpa os arquivos temporários e exibe uma tabela de resumo.
+5.  O seu arquivo de estudos finalizado estará salvo na pasta `results/` com o nome `{NomeDoBaralho}.apkg` (no nosso exemplo, `Historia do Brasil.apkg`).
+6.  **Como Estudar:** 
+    *   Abra o seu aplicativo Anki no computador ou celular, vá em **Arquivo > Importar** (ou dê dois cliques no arquivo `.apkg`) e selecione o arquivo gerado.
+    *   Ao estudar esse baralho, o Anki exibirá a pergunta acompanhada de uma **caixa de digitação**. Digite a sua resposta nela.
+    *   Clique em **Mostrar Resposta**. O Anki fará uma comparação instantânea realçando em **verde** o que você acertou e em **vermelho** o que errou ou faltou.
+    *   O áudio de pronúncia da resposta será executado automaticamente.
+    *   Por fim, clique nos botões clássicos do Anki (**Again** / **Hard** / **Good** / **Easy**) de acordo com a sua facilidade de memorização para programar a repetição espaçada.
 
 ---
 
