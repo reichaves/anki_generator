@@ -16,6 +16,11 @@ from anki_generator.gemini_client import (
     get_voice_for_language,
     save_pcm_as_wav,
 )
+from anki_generator.anki_exporter import (
+    export_offline,
+    export_online,
+    invoke_anki_connect,
+)
 
 __all__ = [
     "settings",
@@ -34,4 +39,7 @@ __all__ = [
     "GeminiClient",
     "get_voice_for_language",
     "save_pcm_as_wav",
+    "export_offline",
+    "export_online",
+    "invoke_anki_connect",
 ]
