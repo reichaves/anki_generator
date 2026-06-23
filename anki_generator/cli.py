@@ -142,6 +142,13 @@ def run_cli() -> None:
         choices=["genanki (offline .apkg)", "AnkiConnect (online via API)"],
     ).ask()
 
+    deck_name = questionary.text(
+        "Qual o nome do baralho (deck) do Anki que deseja criar?",
+        default="Estudos",
+    ).ask()
+    if not deck_name or not deck_name.strip():
+        deck_name = "Estudos"
+
     console.print("\n[yellow]Gerando cartões de estudo...[/yellow]")
     try:
         collection = client.generate_flashcards(combined_text, count, language)
@@ -175,7 +182,7 @@ def run_cli() -> None:
 
     console.print("[yellow]Exportando cartões para o Anki...[/yellow]")
     try:
-        deck_name = "anki_generator_deck"
+        deck_name = deck_name.strip()
         if export_mode == "genanki (offline .apkg)":
             output_apkg = os.path.join("results", f"{deck_name}.apkg")
             export_offline(

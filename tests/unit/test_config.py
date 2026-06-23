@@ -15,7 +15,7 @@ def test_config_loading_success() -> None:
     ):
         from anki_generator.config import Settings
 
-        settings_instance = Settings()
+        settings_instance = Settings(_env_file=None)
         assert settings_instance.gemini_api_key == "test_key"
         assert settings_instance.anki_connect_url == "http://test:8765"
         assert settings_instance.log_level == "DEBUG"
@@ -26,4 +26,4 @@ def test_config_loading_missing_key() -> None:
         from anki_generator.config import Settings
 
         with pytest.raises(ValidationError):
-            Settings()
+            Settings(_env_file=None)

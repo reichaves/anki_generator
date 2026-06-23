@@ -11,7 +11,6 @@ logger = structlog.get_logger()
 
 # Constantes do Anki
 MODEL_ID = 1432958472
-DECK_ID = 1892847291
 
 anki_model = genanki.Model(
     MODEL_ID,
@@ -25,8 +24,8 @@ anki_model = genanki.Model(
     templates=[
         {
             "name": "Cartão 1",
-            "qfmt": "{{Question}}",
-            "afmt": '{{FrontSide}}<hr id="answer">{{AnswerText}}<br><br>{{Audio}}<br><br><small>Fonte: {{Source}}</small>',
+            "qfmt": "{{Question}}<br><br>{{type:AnswerText}}",
+            "afmt": '{{FrontSide}}<hr id="answer">{{type:AnswerText}}<br><br>{{Audio}}<br><br><small>Fonte: {{Source}}</small>',
         },
     ],
 )
@@ -45,7 +44,8 @@ def export_offline(
         output_path=output_apkg_path,
     )
 
-    deck = genanki.Deck(DECK_ID, deck_name)
+    deck_id = abs(hash(deck_name)) % 10**10
+    deck = genanki.Deck(deck_id, deck_name)
     media_files: list[str] = []
 
     for idx, card in enumerate(cards):
@@ -124,8 +124,8 @@ def export_online(
                 cardTemplates=[
                     {
                         "Name": "Cartão 1",
-                        "Front": "{{Question}}",
-                        "Back": '{{FrontSide}}<hr id="answer">{{AnswerText}}<br><br>{{Audio}}<br><br><small>Fonte: {{Source}}</small>',
+                        "Front": "{{Question}}<br><br>{{type:AnswerText}}",
+                        "Back": '{{FrontSide}}<hr id="answer">{{type:AnswerText}}<br><br>{{Audio}}<br><br><small>Fonte: {{Source}}</small>',
                     }
                 ],
             )

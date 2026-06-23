@@ -32,6 +32,9 @@ def test_pipeline_integration_success(
     mock_text_count = MagicMock()
     mock_text_count.ask.return_value = "3"
 
+    mock_text_deck = MagicMock()
+    mock_text_deck.ask.return_value = "Estudos"
+
     mock_select_lang = MagicMock()
     mock_select_lang.ask.return_value = "Português"
 
@@ -42,7 +45,11 @@ def test_pipeline_integration_success(
     mock_select_export.ask.return_value = "genanki (offline .apkg)"
 
     mock_questionary.checkbox.return_value = mock_checkbox
-    mock_questionary.text.side_effect = [mock_text_urls, mock_text_count]
+    mock_questionary.text.side_effect = [
+        mock_text_urls,
+        mock_text_count,
+        mock_text_deck,
+    ]
     mock_questionary.select.side_effect = [
         mock_select_lang,
         mock_select_modal,
