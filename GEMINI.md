@@ -1,17 +1,17 @@
 # Guia de Integração com a API do Gemini (GEMINI.md)
 
-Este documento centraliza as diretrizes técnicas para o consumo das APIs do Google Gemini no projeto `anki_generator` utilizando o SDK oficial `google-genai`.
+Este documento centraliza as diretrizes técnicas e as configurações definitivas utilizadas para o consumo das APIs do Google Gemini no projeto `anki_generator` por meio do SDK oficial `google-genai`.
 
 ---
 
-## 1. Modelos Utilizados
+## 1. Modelos e Configurações de Mídia
 
 A pipeline utiliza dois modelos distintos para processamento de texto e síntese de voz:
 
 | Função | Identificador do Modelo (ID) | Modos de Entrada/Saída |
 | :--- | :--- | :--- |
-| **Geração de Texto e Análise** | `gemini-3.5-flash` | Entrada: Texto (ou Multimodal) / Saída: Texto (JSON Estruturado) |
-| **Síntese de Voz (TTS)** | `gemini-3.1-flash-tts-preview` | Entrada: Texto / Saída: Áudio (PCM Bruto) |
+| **Geração de Texto e Análise** | `gemini-3.5-flash` | Entrada: Texto / Saída: Texto (JSON Estruturado) |
+| **Síntese de Voz (TTS)** | `gemini-3.1-flash-tts-preview` | Entrada: Texto / Saída: Áudio (PCM Bruto 16-bit 24kHz) |
 
 ---
 
@@ -27,32 +27,40 @@ GEMINI_API_KEY="AIzaSyYourActualApiKeyHere"
 
 ---
 
-## 3. Padrões de Uso do SDK
+## 3. Padrões de Uso do SDK (`google-genai==0.8.0`)
 
 ### A. Geração Estruturada (Modelo de Texto)
-Para garantir que a saída de geração de temas e cartões respeite os schemas rígidos definidos, o SDK utiliza parâmetros de configuração em JSON.
+Para garantir que a saída de geração de temas e cartões respeite os schemas rígidos definidos, o SDK utiliza parâmetros de configuração em JSON com a estrutura do Pydantic v2.
 
 ```python
 from google import genai
+from google.genai import types
 from anki_generator.models import FlashcardCollection
 
 client = genai.Client()
 
+config = types.GenerateContentConfig(
+    response_mime_type="application/json",
+    response_schema=FlashcardCollection,
+)
+
 response = client.models.generate_content(
     model="gemini-3.5-flash",
     contents="Prompt estruturado com o material de estudos.",
-    config={
-        "response_mime_type": "application/json",
-        "response_schema": FlashcardCollection,
-    }
+    config=config
 )
 
 # O atributo parsed contém a instância do Pydantic validada
 flashcards = response.parsed
 ```
 
-### B. Síntese de Voz (TTS)
-O modelo `gemini-3.1-flash-tts-preview` gera áudio em resposta a comandos textuais. A resposta deve ser explicitamente configurada para áudio.
+### B. Síntese de Voz (TTS) com Mapeamento Dinâmico de Vozes
+O modelo `gemini-3.1-flash-tts-preview` gera áudio em resposta a comandos textuais. A voz de resposta é mapeada de acordo com o idioma selecionado na interface de terminal (CLI):
+
+*   **Português (PT):** Voz `Fenrir`
+*   **Inglês (EN):** Voz `Kore`
+*   **Espanhol (ES):** Voz `Aoede`
+*   **Outros/Fallback:** Voz `Kore`
 
 ```python
 from google import genai
@@ -60,22 +68,24 @@ from google.genai import types
 
 client = genai.Client()
 
-response = client.models.generate_content(
-    model="gemini-3.1-flash-tts-preview",
-    contents="Texto a ser convertido em voz.",
-    config=types.GenerateContentConfig(
-        response_modalities=["AUDIO"],
-        speech_config=types.SpeechConfig(
-            voice_config=types.VoiceConfig(
-                prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                    voice_name="Kore"
-                )
+config = types.GenerateContentConfig(
+    response_modalities=["AUDIO"],
+    speech_config=types.SpeechConfig(
+        voice_config=types.VoiceConfig(
+            prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                voice_name="Fenrir"  # Mapeado dinamicamente
             )
         )
     )
 )
 
-# Os bytes de áudio bruto estão contidos na resposta
+response = client.models.generate_content(
+    model="gemini-3.1-flash-tts-preview",
+    contents="Texto a ser convertido em voz.",
+    config=config
+)
+
+# Os bytes de áudio bruto (PCM) estão contidos na resposta
 raw_pcm_bytes = response.candidates[0].content.parts[0].inline_data.data
 ```
 
@@ -86,7 +96,7 @@ raw_pcm_bytes = response.candidates[0].content.parts[0].inline_data.data
 *   **HTTP 429 (Too Many Requests):** Ocorre quando os limites de requisições por minuto (RPM) ou tokens por minuto (TPM) da chave de API são atingidos.
 *   **Mitigação:** Implementa-se uma camada de persistência com retentativas baseadas na biblioteca `tenacity`, utilizando recuo exponencial para evitar congestionar as APIs.
 
-### Estratégia de Retentativas
+### Estratégia de Retentativas Implementada
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
 
