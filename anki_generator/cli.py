@@ -181,10 +181,12 @@ def run_cli() -> None:
                 )
 
     console.print("[yellow]Exportando cartões para o Anki...[/yellow]")
+    deck_name = deck_name.strip()
+    export_succeeded = False
+    output_apkg = os.path.join("results", f"{deck_name}.apkg")
+
     try:
-        deck_name = deck_name.strip()
         if export_mode == "genanki (offline .apkg)":
-            output_apkg = os.path.join("results", f"{deck_name}.apkg")
             export_offline(
                 deck_name,
                 cards_to_process,
@@ -194,15 +196,35 @@ def run_cli() -> None:
             console.print(
                 f"\n[green]Sucesso! Pacote Anki gerado em: {output_apkg}[/green]"
             )
+            export_succeeded = True
         else:
-            export_online(
-                deck_name, cards_to_process, audio_paths if audio_paths else None
-            )
-            console.print(
-                "\n[green]Sucesso! Cartões injetados com sucesso via AnkiConnect.[/green]"
-            )
+            try:
+                export_online(
+                    deck_name, cards_to_process, audio_paths if audio_paths else None
+                )
+                console.print(
+                    "\n[green]Sucesso! Cartões injetados com sucesso via AnkiConnect.[/green]"
+                )
+                export_succeeded = True
+            except Exception as online_err:
+                console.print(
+                    f"\n[yellow]Aviso: Falha na exportação online via AnkiConnect ({online_err}).[/yellow]"
+                )
+                console.print(
+                    "[yellow]Iniciando fallback de segurança para exportação offline...[/yellow]"
+                )
+                export_offline(
+                    deck_name,
+                    cards_to_process,
+                    audio_paths if audio_paths else None,
+                    output_apkg,
+                )
+                console.print(
+                    f"[green]Sucesso! Pacote Anki de fallback gerado offline em: {output_apkg}[/green]"
+                )
+                export_succeeded = True
 
-        if temp_files:
+        if export_succeeded and temp_files:
             console.print("[yellow]Limpando arquivos de áudio temporários...[/yellow]")
             for fp in temp_files:
                 if os.path.exists(fp):
@@ -216,7 +238,7 @@ def run_cli() -> None:
                         )
 
     except Exception as e:
-        console.print(f"[red]Erro durante a exportação para o Anki: {e}[/red]")
+        console.print(f"[red]Erro crítico durante a exportação para o Anki: {e}[/red]")
         return
 
     console.print("\n[bold green]=== Resumo da Execução ===[/bold green]")
