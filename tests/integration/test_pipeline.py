@@ -36,10 +36,10 @@ def test_pipeline_integration_success(
     mock_text_deck.ask.return_value = "Estudos"
 
     mock_select_lang = MagicMock()
-    mock_select_lang.ask.return_value = "Português"
+    mock_select_lang.ask.return_value = "Portuguese"
 
     mock_select_modal = MagicMock()
-    mock_select_modal.ask.return_value = "Texto + Áudio (TTS)"
+    mock_select_modal.ask.return_value = "Text + Audio (TTS)"
 
     mock_select_export = MagicMock()
     mock_select_export.ask.return_value = "genanki (offline .apkg)"
@@ -140,10 +140,10 @@ def test_pipeline_integration_online_fallback_offline(
     mock_text_deck.ask.return_value = "JCA Operations"
 
     mock_select_lang = MagicMock()
-    mock_select_lang.ask.return_value = "Inglês"
+    mock_select_lang.ask.return_value = "English"
 
     mock_select_modal = MagicMock()
-    mock_select_modal.ask.return_value = "Texto + Áudio (TTS)"
+    mock_select_modal.ask.return_value = "Text + Audio (TTS)"
 
     mock_select_export = MagicMock()
     mock_select_export.ask.return_value = "AnkiConnect (online via API)"

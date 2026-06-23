@@ -21,10 +21,10 @@ console = Console()
 
 
 def run_cli() -> None:
-    """Executa a interface de linha de comando (CLI) interativa do anki_generator."""
+    """Executes the interactive command line interface (CLI) for anki_generator."""
     console.print(
         Panel(
-            "[bold blue]anki_generator - Gerador de Flashcards via Gemini[/bold blue]"
+            "[bold blue]anki_generator - Flashcard Generator via Gemini[/bold blue]"
         )
     )
 
@@ -38,7 +38,7 @@ def run_cli() -> None:
     if local_files:
         file_choices = [os.path.basename(f) for f in local_files]
         chosen_names = questionary.checkbox(
-            "Selecione os arquivos locais para processar:",
+            "Select local files to process:",
             choices=file_choices,
         ).ask()
         if chosen_names:
@@ -47,18 +47,18 @@ def run_cli() -> None:
             ]
 
     youtube_urls_input = questionary.text(
-        "Insira URLs do YouTube (separadas por vírgula) [Opcional]:"
+        "Enter YouTube URLs (comma-separated) [Optional]:"
     ).ask()
 
     youtube_urls = [url.strip() for url in youtube_urls_input.split(",") if url.strip()]
 
     if not selected_files and not youtube_urls:
         console.print(
-            "[red]Erro: Nenhuma fonte de estudo foi selecionada ou fornecida. Abortando.[/red]"
+            "[red]Error: No study source was selected or provided. Aborting.[/red]"
         )
         return
 
-    console.print("\n[yellow]Extraindo conteúdo das fontes...[/yellow]")
+    console.print("\n[yellow]Extracting content from sources...[/yellow]")
     full_text_parts: list[str] = []
 
     for file_path in selected_files:
@@ -75,7 +75,7 @@ def run_cli() -> None:
                 )
         except ExtractorError as e:
             console.print(
-                f"[red]Erro ao extrair arquivo {os.path.basename(file_path)}: {e}[/red]"
+                f"[red]Error extracting file {os.path.basename(file_path)}: {e}[/red]"
             )
 
     for url in youtube_urls:
@@ -88,31 +88,31 @@ def run_cli() -> None:
 
             combined_transcript = " ".join(transcript_text_parts)
             full_text_parts.append(
-                f"--- Fonte (Vídeo do YouTube: {url}) ---\n{combined_transcript}\n"
+                f"--- Source (YouTube Video: {url}) ---\n{combined_transcript}\n"
             )
         except TranscriptUnavailableError as e:
-            console.print(f"[red]Erro ao obter transcrição do vídeo {url}: {e}[/red]")
+            console.print(f"[red]Error retrieving transcript for video {url}: {e}[/red]")
 
     combined_text = "\n".join(full_text_parts)
     if not combined_text.strip():
         console.print(
-            "[red]Erro: Nenhum texto válido pôde ser extraído das fontes. Abortando.[/red]"
+            "[red]Error: No valid text could be extracted from sources. Aborting.[/red]"
         )
         return
 
-    console.print("[yellow]Realizando pré-análise do conteúdo com o Gemini...[/yellow]")
+    console.print("[yellow]Performing content pre-analysis with Gemini...[/yellow]")
     client = GeminiClient()
     try:
         suggestion = client.suggest_themes(combined_text)
     except Exception as e:
-        console.print(f"[red]Erro na comunicação com a API do Gemini: {e}[/red]")
+        console.print(f"[red]Error communicating with Gemini API: {e}[/red]")
         return
 
-    console.print("\n[bold green]Análise do material concluída:[/bold green]")
-    table = Table(title="Tópicos Identificados")
-    table.add_column("Temas", style="cyan")
-    table.add_column("Sugestão de Cartões", style="magenta")
-    table.add_column("Justificativa", style="green")
+    console.print("\n[bold green]Material analysis completed:[/bold green]")
+    table = Table(title="Identified Topics")
+    table.add_column("Themes", style="cyan")
+    table.add_column("Suggested Cards", style="magenta")
+    table.add_column("Rationale", style="green")
 
     themes_str = ", ".join(suggestion.themes)
     table.add_row(
@@ -121,39 +121,39 @@ def run_cli() -> None:
     console.print(table)
 
     count_str = questionary.text(
-        "Quantos cartões de estudo você deseja gerar?",
+        "How many study cards do you want to generate?",
         default=str(suggestion.suggested_cards_count),
         validate=lambda val: val.isdigit() and int(val) > 0,
     ).ask()
     count = int(count_str)
 
     language = questionary.select(
-        "Selecione o idioma de geração dos cartões:",
-        choices=["Português", "Inglês", "Espanhol"],
+        "Select the language to generate flashcards in:",
+        choices=["Portuguese", "English", "Spanish"],
     ).ask()
 
     modality = questionary.select(
-        "Selecione a modalidade dos cartões:",
-        choices=["Apenas Texto", "Texto + Áudio (TTS)"],
+        "Select the flashcard modality:",
+        choices=["Text Only", "Text + Audio (TTS)"],
     ).ask()
 
     export_mode = questionary.select(
-        "Selecione a forma de exportação para o Anki:",
+        "Select the export format for Anki:",
         choices=["genanki (offline .apkg)", "AnkiConnect (online via API)"],
     ).ask()
 
     deck_name = questionary.text(
-        "Qual o nome do baralho (deck) do Anki que deseja criar?",
+        "What is the name of the Anki deck you wish to create?",
         default="Estudos",
     ).ask()
     if not deck_name or not deck_name.strip():
         deck_name = "Estudos"
 
-    console.print("\n[yellow]Gerando cartões de estudo...[/yellow]")
+    console.print("\n[yellow]Generating flashcards...[/yellow]")
     try:
         collection = client.generate_flashcards(combined_text, count, language)
     except Exception as e:
-        console.print(f"[red]Erro ao gerar cartões com o Gemini: {e}[/red]")
+        console.print(f"[red]Error generating flashcards with Gemini: {e}[/red]")
         return
 
     cards_to_process = collection.cards[:count]
@@ -161,8 +161,8 @@ def run_cli() -> None:
     audio_paths: dict[int, str] = {}
     temp_files: list[str] = []
 
-    if modality == "Texto + Áudio (TTS)":
-        console.print("[yellow]Gerando arquivos de áudio via TTS...[/yellow]")
+    if modality == "Text + Audio (TTS)":
+        console.print("[yellow]Generating audio files via TTS...[/yellow]")
         results_dir = "results"
         if not os.path.exists(results_dir):
             os.makedirs(results_dir, exist_ok=True)
@@ -177,10 +177,10 @@ def run_cli() -> None:
                 temp_files.append(filepath)
             except Exception as e:
                 console.print(
-                    f"[red]Erro ao gerar áudio para o cartão {idx+1}: {e}[/red]"
+                    f"[red]Error generating audio for card {idx+1}: {e}[/red]"
                 )
 
-    console.print("[yellow]Exportando cartões para o Anki...[/yellow]")
+    console.print("[yellow]Exporting cards to Anki...[/yellow]")
     deck_name = deck_name.strip()
     export_succeeded = False
     output_apkg = os.path.join("results", f"{deck_name}.apkg")
@@ -194,7 +194,7 @@ def run_cli() -> None:
                 output_apkg,
             )
             console.print(
-                f"\n[green]Sucesso! Pacote Anki gerado em: {output_apkg}[/green]"
+                f"\n[green]Success! Anki package generated at: {output_apkg}[/green]"
             )
             export_succeeded = True
         else:
@@ -203,15 +203,15 @@ def run_cli() -> None:
                     deck_name, cards_to_process, audio_paths if audio_paths else None
                 )
                 console.print(
-                    "\n[green]Sucesso! Cartões injetados com sucesso via AnkiConnect.[/green]"
+                    "\n[green]Success! Cards successfully injected via AnkiConnect.[/green]"
                 )
                 export_succeeded = True
             except Exception as online_err:
                 console.print(
-                    f"\n[yellow]Aviso: Falha na exportação online via AnkiConnect ({online_err}).[/yellow]"
+                    f"\n[yellow]Warning: Online export via AnkiConnect failed ({online_err}).[/yellow]"
                 )
                 console.print(
-                    "[yellow]Iniciando fallback de segurança para exportação offline...[/yellow]"
+                    "[yellow]Initiating safety fallback for offline export...[/yellow]"
                 )
                 export_offline(
                     deck_name,
@@ -220,36 +220,36 @@ def run_cli() -> None:
                     output_apkg,
                 )
                 console.print(
-                    f"[green]Sucesso! Pacote Anki de fallback gerado offline em: {output_apkg}[/green]"
+                    f"[green]Success! Fallback Anki package generated offline at: {output_apkg}[/green]"
                 )
                 export_succeeded = True
 
         if export_succeeded and temp_files:
-            console.print("[yellow]Limpando arquivos de áudio temporários...[/yellow]")
+            console.print("[yellow]Cleaning up temporary audio files...[/yellow]")
             for fp in temp_files:
                 if os.path.exists(fp):
                     try:
                         os.remove(fp)
                     except Exception as e:
                         logger.warning(
-                            "Falha ao remover arquivo de áudio temporário",
+                            "Failed to remove temporary audio file",
                             path=fp,
                             error=str(e),
                         )
 
     except Exception as e:
-        console.print(f"[red]Erro crítico durante a exportação para o Anki: {e}[/red]")
+        console.print(f"[red]Critical error during Anki export: {e}[/red]")
         return
 
-    console.print("\n[bold green]=== Resumo da Execução ===[/bold green]")
+    console.print("\n[bold green]=== Execution Summary ===[/bold green]")
     summary_table = Table()
-    summary_table.add_column("Métrica", style="cyan")
-    summary_table.add_column("Valor", style="green")
-    summary_table.add_row("Cartões solicitados", str(count))
-    summary_table.add_row("Cartões efetivamente gerados", str(len(cards_to_process)))
-    summary_table.add_row("Idioma", language)
-    summary_table.add_row("Modalidade", modality)
-    summary_table.add_row("Modo de Exportação", export_mode)
-    summary_table.add_row("Fontes locais processadas", str(len(selected_files)))
-    summary_table.add_row("Vídeos do YouTube processados", str(len(youtube_urls)))
+    summary_table.add_column("Metric", style="cyan")
+    summary_table.add_column("Value", style="green")
+    summary_table.add_row("Requested cards", str(count))
+    summary_table.add_row("Cards successfully generated", str(len(cards_to_process)))
+    summary_table.add_row("Language", language)
+    summary_table.add_row("Modality", modality)
+    summary_table.add_row("Export Mode", export_mode)
+    summary_table.add_row("Local files processed", str(len(selected_files)))
+    summary_table.add_row("YouTube videos processed", str(len(youtube_urls)))
     console.print(summary_table)
