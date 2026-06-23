@@ -19,5 +19,5 @@ Projeto de pipeline interativa em Python que ingere documentos DOCX, PDF e trans
 - **M1: Config & Contratos**: Concluído (Testes unitários verdes, cobertura 100%, Ruff/Mypy OK).
 - **M2: Extractors**: Concluído (Testes unitários verdes, cobertura 97%, Ruff/Mypy OK).
 - **M3: Gemini Client**: Concluído (Testes unitários verdes, cobertura 95%, Ruff/Mypy OK).
-- **M4: Anki Exporter**: Não Iniciado.
+- **M4: Anki Exporter**: Concluído (Testes unitários verdes, cobertura 89%, Ruff/Mypy OK).
 - **M5: CLI & Integração**: Não Iniciado.
