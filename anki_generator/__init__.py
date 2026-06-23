@@ -21,6 +21,7 @@ from anki_generator.anki_exporter import (
     export_online,
     invoke_anki_connect,
 )
+from anki_generator.cli import run_cli
 
 __all__ = [
     "settings",
@@ -42,4 +43,5 @@ __all__ = [
     "export_offline",
     "export_online",
     "invoke_anki_connect",
+    "run_cli",
 ]
