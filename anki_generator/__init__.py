@@ -11,6 +11,11 @@ from anki_generator.extractors import (
     extract_youtube_transcript,
     scan_content_directory,
 )
+from anki_generator.gemini_client import (
+    GeminiClient,
+    get_voice_for_language,
+    save_pcm_as_wav,
+)
 
 __all__ = [
     "settings",
@@ -26,4 +31,7 @@ __all__ = [
     "extract_youtube_video_id",
     "extract_youtube_transcript",
     "scan_content_directory",
+    "GeminiClient",
+    "get_voice_for_language",
+    "save_pcm_as_wav",
 ]
