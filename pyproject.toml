@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "anki-generator-cli"
+version = "0.1.0"
+description = "Gerador de Flashcards para Anki usando a API do Gemini"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Developer" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "google-genai==0.8.0",
+    "genanki==0.13.0",
+    "youtube-transcript-api==0.6.2",
+    "python-docx==1.1.0",
+    "pypdf==4.2.0",
+    "requests==2.31.0",
+    "pydantic==2.12.0",
+    "pydantic-settings==2.12.0",
+    "tenacity==8.2.3",
+    "structlog==24.1.0",
+    "questionary==2.0.1",
+    "rich==13.7.1",
+]
+
+[project.scripts]
+anki-generator = "anki_generator.cli:run_cli"
+
+[tool.setuptools.packages.find]
+include = ["anki_generator*"]
