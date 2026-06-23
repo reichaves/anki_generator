@@ -4,7 +4,7 @@ import structlog
 from typing import TypedDict
 from docx import Document  # type: ignore[import-untyped]
 from pypdf import PdfReader
-from youtube_transcript_api import (  # type: ignore[import-untyped]
+from youtube_transcript_api import (
     YouTubeTranscriptApi,
     TranscriptsDisabled,
     NoTranscriptFound,
@@ -92,12 +92,16 @@ def extract_youtube_transcript(url: str) -> list[TranscriptEntry]:
     logger.info("Obtendo transcrição do YouTube", url=url)
     video_id = extract_youtube_video_id(url)
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        # Instancia a API e lista as transcrições disponíveis
+        transcript_list = YouTubeTranscriptApi().list(video_id)
+        # Seleciona a primeira transcrição disponível (idioma padrão/original)
+        first_transcript = next(iter(transcript_list))
+        transcript = first_transcript.fetch()
         return [
             TranscriptEntry(
-                text=entry["text"],
-                start=float(entry["start"]),
-                duration=float(entry["duration"]),
+                text=entry.text,
+                start=float(entry.start),
+                duration=float(entry.duration),
             )
             for entry in transcript
         ]

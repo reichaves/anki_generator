@@ -44,12 +44,28 @@ def test_extract_youtube_video_id() -> None:
         extract_youtube_video_id("https://example.com/not-youtube")
 
 
-@patch("anki_generator.extractors.YouTubeTranscriptApi.get_transcript")
-def test_extract_youtube_transcript_success(mock_get_transcript: MagicMock) -> None:
-    mock_get_transcript.return_value = [
-        {"text": "Hello world", "start": 0.0, "duration": 2.0},
-        {"text": "Anki is great", "start": 2.0, "duration": 3.0},
-    ]
+@patch("anki_generator.extractors.YouTubeTranscriptApi")
+def test_extract_youtube_transcript_success(mock_youtube_api_cls: MagicMock) -> None:
+    mock_instance = MagicMock()
+    mock_list_result = MagicMock()
+    mock_transcript = MagicMock()
+
+    mock_entry1 = MagicMock()
+    mock_entry1.text = "Hello world"
+    mock_entry1.start = 0.0
+    mock_entry1.duration = 2.0
+
+    mock_entry2 = MagicMock()
+    mock_entry2.text = "Anki is great"
+    mock_entry2.start = 2.0
+    mock_entry2.duration = 3.0
+
+    mock_transcript.fetch.return_value = [mock_entry1, mock_entry2]
+
+    mock_instance.list.return_value = mock_list_result
+    mock_list_result.__iter__.return_value = iter([mock_transcript])
+    mock_youtube_api_cls.return_value = mock_instance
+
     entries = extract_youtube_transcript("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
     assert len(entries) == 2
     assert entries[0]["text"] == "Hello world"
@@ -57,20 +73,26 @@ def test_extract_youtube_transcript_success(mock_get_transcript: MagicMock) -> N
     assert entries[1]["duration"] == 3.0
 
 
-@patch("anki_generator.extractors.YouTubeTranscriptApi.get_transcript")
-def test_extract_youtube_transcript_disabled(mock_get_transcript: MagicMock) -> None:
-    mock_get_transcript.side_effect = TranscriptsDisabled("Video ID")
+@patch("anki_generator.extractors.YouTubeTranscriptApi")
+def test_extract_youtube_transcript_disabled(mock_youtube_api_cls: MagicMock) -> None:
+    mock_instance = MagicMock()
+    mock_instance.list.side_effect = TranscriptsDisabled("Video ID")
+    mock_youtube_api_cls.return_value = mock_instance
+
     with pytest.raises(
         TranscriptUnavailableError, match="Transcrições desativadas ou indisponíveis"
     ):
         extract_youtube_transcript("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
 
-@patch("anki_generator.extractors.YouTubeTranscriptApi.get_transcript")
+@patch("anki_generator.extractors.YouTubeTranscriptApi")
 def test_extract_youtube_transcript_generic_error(
-    mock_get_transcript: MagicMock,
+    mock_youtube_api_cls: MagicMock,
 ) -> None:
-    mock_get_transcript.side_effect = Exception("API error")
+    mock_instance = MagicMock()
+    mock_instance.list.side_effect = Exception("API error")
+    mock_youtube_api_cls.return_value = mock_instance
+
     with pytest.raises(TranscriptUnavailableError, match="Erro ao obter transcrição"):
         extract_youtube_transcript("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 
