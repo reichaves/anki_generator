@@ -63,6 +63,12 @@ To allow Google's AI to scan your materials and construct questions, you need an
     ```bash
     anki-generator
     ```
+    *(If your system blocks the execution of the `.exe` wrapper, you can run it via Python instead):*
+    ```bash
+    python -m anki_generator
+    # or
+    python main.py
+    ```
 
 ---
 
@@ -144,3 +150,10 @@ pytest --cov=anki_generator --cov-fail-under=80
     If you chose direct export via `AnkiConnect` but your Anki Desktop is closed or lacks the AnkiConnect add-on listening on port `8765`, the console prints a warning and falls back to saving a `.apkg` file in your `results/` directory automatically.
 *   **Audio does not play in Anki:**
     Check your sound output settings. Audio is synthesized by the `gemini-3.1-flash-tts-preview` model, saved as a WAV file, and packaged inside Anki. If using AnkiConnect, make sure Anki Desktop was running during generation so it could register media assets.
+*   **App Control Policy blocks `anki-generator.exe` on Windows:**
+    If Windows Defender Application Control (WDAC) or AppLocker blocks the wrapper executable, bypass it by running the application using the Python interpreter directly:
+    ```bash
+    python -m anki_generator
+    # or
+    python main.py
+    ```
