@@ -9,7 +9,31 @@ from anki_generator.anki_exporter import (
     export_offline,
     export_online,
     invoke_anki_connect,
+    stable_deck_id,
 )
+
+
+def test_stable_deck_id_is_deterministic() -> None:
+    """O mesmo nome deve sempre gerar o mesmo ID (independente de PYTHONHASHSEED)."""
+    assert stable_deck_id("Brazilian History") == stable_deck_id("Brazilian History")
+
+
+def test_stable_deck_id_differs_per_name() -> None:
+    """Nomes diferentes devem gerar IDs diferentes."""
+    assert stable_deck_id("Deck A") != stable_deck_id("Deck B")
+
+
+def test_stable_deck_id_in_valid_range() -> None:
+    """O ID deve ser um inteiro positivo dentro do intervalo esperado pelo genanki."""
+    deck_id = stable_deck_id("Estudos")
+    assert isinstance(deck_id, int)
+    assert 0 < deck_id < 10**10
+
+
+def test_stable_deck_id_known_value() -> None:
+    """Trava um valor conhecido para detectar mudanças acidentais no algoritmo."""
+    # SHA-256("Estudos") -> int -> % 10**10
+    assert stable_deck_id("Estudos") == 4346935940
 
 
 def test_export_offline(tmp_path: Path) -> None:
