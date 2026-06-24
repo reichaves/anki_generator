@@ -1,4 +1,6 @@
+import argparse
 import os
+import sys
 import questionary
 import structlog
 from rich.console import Console
@@ -19,45 +21,37 @@ from anki_generator.anki_exporter import export_offline, export_online
 logger = structlog.get_logger()
 console = Console()
 
+# Mapeamentos entre os valores curtos aceitos na linha de comando (modo
+# não-interativo) e os rótulos canônicos usados internamente pela pipeline.
+LANGUAGE_CHOICES: dict[str, str] = {
+    "portuguese": "Portuguese",
+    "pt": "Portuguese",
+    "english": "English",
+    "en": "English",
+    "spanish": "Spanish",
+    "es": "Spanish",
+}
 
-def run_cli() -> None:
-    """Executes the interactive command line interface (CLI) for anki_generator."""
-    console.print(
-        Panel(
-            "[bold blue]anki_generator - Flashcard Generator via Gemini[/bold blue]"
-        )
-    )
+MODALITY_CHOICES: dict[str, str] = {
+    "text": "Text Only",
+    "audio": "Text + Audio (TTS)",
+}
 
-    content_dir = "content"
-    if not os.path.exists(content_dir):
-        os.makedirs(content_dir, exist_ok=True)
+EXPORT_CHOICES: dict[str, str] = {
+    "offline": "genanki (offline .apkg)",
+    "online": "AnkiConnect (online via API)",
+}
 
-    local_files = scan_content_directory(content_dir)
+DEFAULT_DECK_NAME = "Estudos"
 
-    selected_files: list[str] = []
-    if local_files:
-        file_choices = [os.path.basename(f) for f in local_files]
-        chosen_names = questionary.checkbox(
-            "Select local files to process:",
-            choices=file_choices,
-        ).ask()
-        if chosen_names:
-            selected_files = [
-                f for f in local_files if os.path.basename(f) in chosen_names
-            ]
 
-    youtube_urls_input = questionary.text(
-        "Enter YouTube URLs (comma-separated) [Optional]:"
-    ).ask()
+def extract_combined_text(selected_files: list[str], youtube_urls: list[str]) -> str:
+    """Extrai e concatena o texto de arquivos locais e transcrições do YouTube.
 
-    youtube_urls = [url.strip() for url in youtube_urls_input.split(",") if url.strip()]
-
-    if not selected_files and not youtube_urls:
-        console.print(
-            "[red]Error: No study source was selected or provided. Aborting.[/red]"
-        )
-        return
-
+    Compartilhado pelos fluxos interativo e não-interativo. Mensagens de aviso
+    para fontes individuais que falharem são impressas, mas não interrompem o
+    processamento das demais fontes.
+    """
     console.print("\n[yellow]Extracting content from sources...[/yellow]")
     full_text_parts: list[str] = []
 
@@ -91,77 +85,39 @@ def run_cli() -> None:
                 f"--- Source (YouTube Video: {url}) ---\n{combined_transcript}\n"
             )
         except TranscriptUnavailableError as e:
-            console.print(f"[red]Error retrieving transcript for video {url}: {e}[/red]")
+            console.print(
+                f"[red]Error retrieving transcript for video {url}: {e}[/red]"
+            )
 
-    combined_text = "\n".join(full_text_parts)
-    if not combined_text.strip():
-        console.print(
-            "[red]Error: No valid text could be extracted from sources. Aborting.[/red]"
-        )
-        return
+    return "\n".join(full_text_parts)
 
-    console.print("[yellow]Performing content pre-analysis with Gemini...[/yellow]")
-    client = GeminiClient()
-    try:
-        suggestion = client.suggest_themes(combined_text)
-    except Exception as e:
-        console.print(f"[red]Error communicating with Gemini API: {e}[/red]")
-        return
 
-    console.print("\n[bold green]Material analysis completed:[/bold green]")
-    table = Table(title="Identified Topics")
-    table.add_column("Themes", style="cyan")
-    table.add_column("Suggested Cards", style="magenta")
-    table.add_column("Rationale", style="green")
+def generate_and_export(
+    client: GeminiClient,
+    combined_text: str,
+    count: int,
+    language: str,
+    modality: str,
+    export_mode: str,
+    deck_name: str,
+    n_files: int,
+    n_youtube: int,
+) -> None:
+    """Gera flashcards, áudio opcional e exporta para o Anki, exibindo um resumo.
 
-    themes_str = ", ".join(suggestion.themes)
-    table.add_row(
-        themes_str, str(suggestion.suggested_cards_count), suggestion.rationale
-    )
-    console.print(table)
-
-    count_str = questionary.text(
-        "How many study cards do you want to generate?",
-        default=str(suggestion.suggested_cards_count),
-        validate=lambda val: val.isdigit() and int(val) > 0,
-    ).ask()
-    count = int(count_str)
-
-    language = questionary.select(
-        "Select the language to generate flashcards in:",
-        choices=["Portuguese", "English", "Spanish"],
-    ).ask()
-
-    modality = questionary.select(
-        "Select the flashcard modality:",
-        choices=["Text Only", "Text + Audio (TTS)"],
-    ).ask()
-
-    export_mode = questionary.select(
-        "Select the export format for Anki:",
-        choices=["genanki (offline .apkg)", "AnkiConnect (online via API)"],
-    ).ask()
-
-    deck_name = questionary.text(
-        "What is the name of the Anki deck you wish to create?",
-        default="Estudos",
-    ).ask()
-    if not deck_name or not deck_name.strip():
-        deck_name = "Estudos"
-
+    Compartilhado pelos fluxos interativo e não-interativo. Recebe todas as
+    decisões já resolvidas (contagem, idioma, modalidade, exportação, baralho)
+    como parâmetros explícitos.
+    """
     console.print("\n[yellow]Generating flashcards...[/yellow]")
-    try:
-        collection = client.generate_flashcards(combined_text, count, language)
-    except Exception as e:
-        console.print(f"[red]Error generating flashcards with Gemini: {e}[/red]")
-        return
+    collection = client.generate_flashcards(combined_text, count, language)
 
     cards_to_process = collection.cards[:count]
 
     audio_paths: dict[int, str] = {}
     temp_files: list[str] = []
 
-    if modality == "Text + Audio (TTS)":
+    if modality == MODALITY_CHOICES["audio"]:
         console.print("[yellow]Generating audio files via TTS...[/yellow]")
         results_dir = "results"
         if not os.path.exists(results_dir):
@@ -177,7 +133,7 @@ def run_cli() -> None:
                 temp_files.append(filepath)
             except Exception as e:
                 console.print(
-                    f"[red]Error generating audio for card {idx+1}: {e}[/red]"
+                    f"[red]Error generating audio for card {idx + 1}: {e}[/red]"
                 )
 
     console.print("[yellow]Exporting cards to Anki...[/yellow]")
@@ -186,7 +142,7 @@ def run_cli() -> None:
     output_apkg = os.path.join("results", f"{deck_name}.apkg")
 
     try:
-        if export_mode == "genanki (offline .apkg)":
+        if export_mode == EXPORT_CHOICES["offline"]:
             export_offline(
                 deck_name,
                 cards_to_process,
@@ -250,6 +206,295 @@ def run_cli() -> None:
     summary_table.add_row("Language", language)
     summary_table.add_row("Modality", modality)
     summary_table.add_row("Export Mode", export_mode)
-    summary_table.add_row("Local files processed", str(len(selected_files)))
-    summary_table.add_row("YouTube videos processed", str(len(youtube_urls)))
+    summary_table.add_row("Local files processed", str(n_files))
+    summary_table.add_row("YouTube videos processed", str(n_youtube))
     console.print(summary_table)
+
+
+def run_cli() -> None:
+    """Executes the interactive command line interface (CLI) for anki_generator."""
+    console.print(
+        Panel("[bold blue]anki_generator - Flashcard Generator via Gemini[/bold blue]")
+    )
+
+    content_dir = "content"
+    if not os.path.exists(content_dir):
+        os.makedirs(content_dir, exist_ok=True)
+
+    local_files = scan_content_directory(content_dir)
+
+    selected_files: list[str] = []
+    if local_files:
+        file_choices = [os.path.basename(f) for f in local_files]
+        chosen_names = questionary.checkbox(
+            "Select local files to process:",
+            choices=file_choices,
+        ).ask()
+        if chosen_names:
+            selected_files = [
+                f for f in local_files if os.path.basename(f) in chosen_names
+            ]
+
+    youtube_urls_input = questionary.text(
+        "Enter YouTube URLs (comma-separated) [Optional]:"
+    ).ask()
+
+    youtube_urls = [url.strip() for url in youtube_urls_input.split(",") if url.strip()]
+
+    if not selected_files and not youtube_urls:
+        console.print(
+            "[red]Error: No study source was selected or provided. Aborting.[/red]"
+        )
+        return
+
+    combined_text = extract_combined_text(selected_files, youtube_urls)
+    if not combined_text.strip():
+        console.print(
+            "[red]Error: No valid text could be extracted from sources. Aborting.[/red]"
+        )
+        return
+
+    console.print("[yellow]Performing content pre-analysis with Gemini...[/yellow]")
+    client = GeminiClient()
+    try:
+        suggestion = client.suggest_themes(combined_text)
+    except Exception as e:
+        console.print(f"[red]Error communicating with Gemini API: {e}[/red]")
+        return
+
+    console.print("\n[bold green]Material analysis completed:[/bold green]")
+    table = Table(title="Identified Topics")
+    table.add_column("Themes", style="cyan")
+    table.add_column("Suggested Cards", style="magenta")
+    table.add_column("Rationale", style="green")
+
+    themes_str = ", ".join(suggestion.themes)
+    table.add_row(
+        themes_str, str(suggestion.suggested_cards_count), suggestion.rationale
+    )
+    console.print(table)
+
+    count_str = questionary.text(
+        "How many study cards do you want to generate?",
+        default=str(suggestion.suggested_cards_count),
+        validate=lambda val: val.isdigit() and int(val) > 0,
+    ).ask()
+    count = int(count_str)
+
+    language = questionary.select(
+        "Select the language to generate flashcards in:",
+        choices=["Portuguese", "English", "Spanish"],
+    ).ask()
+
+    modality = questionary.select(
+        "Select the flashcard modality:",
+        choices=["Text Only", "Text + Audio (TTS)"],
+    ).ask()
+
+    export_mode = questionary.select(
+        "Select the export format for Anki:",
+        choices=["genanki (offline .apkg)", "AnkiConnect (online via API)"],
+    ).ask()
+
+    deck_name = questionary.text(
+        "What is the name of the Anki deck you wish to create?",
+        default=DEFAULT_DECK_NAME,
+    ).ask()
+    if not deck_name or not deck_name.strip():
+        deck_name = DEFAULT_DECK_NAME
+
+    try:
+        generate_and_export(
+            client,
+            combined_text,
+            count,
+            language,
+            modality,
+            export_mode,
+            deck_name,
+            n_files=len(selected_files),
+            n_youtube=len(youtube_urls),
+        )
+    except Exception as e:
+        console.print(f"[red]Error generating flashcards with Gemini: {e}[/red]")
+        return
+
+
+def resolve_input_files(file_args: list[str], content_dir: str) -> list[str]:
+    """Resolve os arquivos passados via flag para caminhos existentes.
+
+    Cada valor pode ser um caminho (absoluto ou relativo) ou apenas o nome de
+    um arquivo dentro de ``content_dir``. Arquivos inexistentes ou com extensão
+    não suportada geram um aviso e são ignorados.
+    """
+    resolved: list[str] = []
+    for raw in file_args:
+        candidate = raw.strip()
+        if not candidate:
+            continue
+        if not candidate.endswith((".docx", ".pdf")):
+            console.print(
+                f"[red]Unsupported file type (expected .docx/.pdf): {candidate}[/red]"
+            )
+            continue
+        if os.path.isfile(candidate):
+            resolved.append(candidate)
+            continue
+        in_content = os.path.join(content_dir, candidate)
+        if os.path.isfile(in_content):
+            resolved.append(in_content)
+            continue
+        console.print(f"[red]File not found: {candidate}[/red]")
+    return resolved
+
+
+def run_noninteractive(args: argparse.Namespace) -> int:
+    """Executa a pipeline sem prompts, a partir dos argumentos da linha de comando.
+
+    Retorna um código de saída: ``0`` em caso de sucesso e ``1`` em caso de erro
+    de validação ou de comunicação com a API.
+    """
+    content_dir = "content"
+    file_args = args.file or []
+    youtube_urls = [u.strip() for u in (args.youtube or []) if u.strip()]
+    selected_files = resolve_input_files(file_args, content_dir)
+
+    if not selected_files and not youtube_urls:
+        console.print(
+            "[red]Error: provide at least one source via --file or --youtube.[/red]"
+        )
+        return 1
+
+    combined_text = extract_combined_text(selected_files, youtube_urls)
+    if not combined_text.strip():
+        console.print(
+            "[red]Error: No valid text could be extracted from sources. Aborting.[/red]"
+        )
+        return 1
+
+    try:
+        client = GeminiClient()
+    except Exception as e:
+        console.print(f"[red]Error initializing Gemini client: {e}[/red]")
+        return 1
+
+    count = args.count
+    if count is None:
+        console.print(
+            "[yellow]No --count provided; asking Gemini for a suggestion...[/yellow]"
+        )
+        try:
+            suggestion = client.suggest_themes(combined_text)
+        except Exception as e:
+            console.print(f"[red]Error communicating with Gemini API: {e}[/red]")
+            return 1
+        count = suggestion.suggested_cards_count
+        console.print(f"[green]Using suggested card count: {count}[/green]")
+
+    language = LANGUAGE_CHOICES[args.language]
+    modality = MODALITY_CHOICES[args.modality]
+    export_mode = EXPORT_CHOICES[args.export]
+    deck_name = (args.deck or DEFAULT_DECK_NAME).strip() or DEFAULT_DECK_NAME
+
+    try:
+        generate_and_export(
+            client,
+            combined_text,
+            count,
+            language,
+            modality,
+            export_mode,
+            deck_name,
+            n_files=len(selected_files),
+            n_youtube=len(youtube_urls),
+        )
+    except Exception as e:
+        console.print(f"[red]Error generating flashcards with Gemini: {e}[/red]")
+        return 1
+
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    """Constrói o parser de argumentos da linha de comando."""
+    parser = argparse.ArgumentParser(
+        prog="anki-generator",
+        description=(
+            "Generate Anki flashcards from documents and YouTube transcripts "
+            "using Google Gemini. Run with no source flags for the interactive "
+            "wizard, or pass --file/--youtube for non-interactive (scriptable) mode."
+        ),
+    )
+    parser.add_argument(
+        "-f",
+        "--file",
+        action="append",
+        metavar="PATH",
+        help=(
+            "Document to process (.docx/.pdf). A path, or a file name inside the "
+            "content/ folder. Repeat the flag for multiple files."
+        ),
+    )
+    parser.add_argument(
+        "-y",
+        "--youtube",
+        action="append",
+        metavar="URL",
+        help="YouTube URL to extract a transcript from. Repeatable.",
+    )
+    parser.add_argument(
+        "-n",
+        "--count",
+        type=int,
+        default=None,
+        help="Number of cards to generate. If omitted, Gemini suggests a count.",
+    )
+    parser.add_argument(
+        "-l",
+        "--language",
+        choices=sorted(LANGUAGE_CHOICES.keys()),
+        default="portuguese",
+        help="Language for the generated cards (default: portuguese).",
+    )
+    parser.add_argument(
+        "-m",
+        "--modality",
+        choices=sorted(MODALITY_CHOICES.keys()),
+        default="text",
+        help="Card modality: 'text' or 'audio' (text + TTS). Default: text.",
+    )
+    parser.add_argument(
+        "-e",
+        "--export",
+        choices=sorted(EXPORT_CHOICES.keys()),
+        default="offline",
+        help="Export target: 'offline' (.apkg) or 'online' (AnkiConnect). Default: offline.",
+    )
+    parser.add_argument(
+        "-d",
+        "--deck",
+        default=DEFAULT_DECK_NAME,
+        help=f"Name of the Anki deck to create (default: {DEFAULT_DECK_NAME}).",
+    )
+    parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Force non-interactive mode (also implied by --file/--youtube).",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Ponto de entrada da CLI: escolhe entre o modo interativo e o não-interativo."""
+    parser = build_parser()
+    args = parser.parse_args(argv)
+
+    if args.non_interactive or args.file or args.youtube:
+        return run_noninteractive(args)
+
+    run_cli()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
