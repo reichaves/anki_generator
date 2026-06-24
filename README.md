@@ -194,8 +194,8 @@ pytest --cov=anki_generator --cov-fail-under=80
     python main.py
     ```
 
----
+## 6. Author & Contributors
 
-## 6. Author
+*   Developed by **Reinaldo Chaves** ([@reichaves](https://github.com/reichaves)).
+*   Contributions by **EnkrateiaLucca** ([@EnkrateiaLucca](https://github.com/EnkrateiaLucca)).
 
-Developed by **Reinaldo Chaves** ([@reichaves](https://github.com/reichaves)).
