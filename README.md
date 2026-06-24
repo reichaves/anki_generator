@@ -1,5 +1,11 @@
 # anki_generator - Automatic Anki Flashcard Generator via Artificial Intelligence
 
+[![GitHub](https://img.shields.io/badge/GitHub-reichaves%2Fanki__generator-blue?logo=github)](https://github.com/reichaves/anki_generator)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python&logoColor=white)](https://python.org)
+[![Gemini](https://img.shields.io/badge/LLM-Gemini%203.5%20Flash-4285F4?logo=google&logoColor=white)](https://aistudio.google.com)
+[![Gemini TTS](https://img.shields.io/badge/TTS-Gemini%203.1%20Flash%20TTS-4285F4?logo=google&logoColor=white)](https://aistudio.google.com)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 **anki_generator** is a Python command-line utility that automates the creation of study flashcards for the Anki application. It reads your study materials (Word summaries, PDF textbooks, or YouTube lectures), extracts the most critical information, and generates flashcards containing questions on the front and answers accompanied by high-quality speech audio on the back.
 
 ---
@@ -157,3 +163,9 @@ pytest --cov=anki_generator --cov-fail-under=80
     # or
     python main.py
     ```
+
+---
+
+## 6. Author
+
+Developed by **Reinaldo Chaves** ([@reichaves](https://github.com/reichaves)).
