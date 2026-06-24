@@ -1,5 +1,6 @@
 import os
 import base64
+import hashlib
 from typing import Any
 import requests  # type: ignore[import-untyped]
 import structlog
@@ -11,6 +12,22 @@ logger = structlog.get_logger()
 
 # Constantes do Anki
 MODEL_ID = 1432958472
+
+
+def stable_deck_id(deck_name: str) -> int:
+    """Gera um ID de baralho determinístico a partir do nome do baralho.
+
+    O ``hash()`` embutido do Python é randomizado por processo (via
+    ``PYTHONHASHSEED``), portanto o mesmo nome de baralho produziria um ID
+    diferente a cada execução. Isso faz com que o Anki trate cada importação
+    como um baralho novo, criando duplicatas em vez de atualizar o existente.
+
+    Usamos um digest SHA-256 estável para garantir que o mesmo nome sempre
+    gere o mesmo ID, permitindo reimportações idempotentes.
+    """
+    digest = hashlib.sha256(deck_name.encode("utf-8")).hexdigest()
+    return int(digest, 16) % 10**10
+
 
 anki_model = genanki.Model(
     MODEL_ID,
@@ -44,7 +61,7 @@ def export_offline(
         output_path=output_apkg_path,
     )
 
-    deck_id = abs(hash(deck_name)) % 10**10
+    deck_id = stable_deck_id(deck_name)
     deck = genanki.Deck(deck_id, deck_name)
     media_files: list[str] = []
 
