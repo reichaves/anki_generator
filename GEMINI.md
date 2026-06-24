@@ -90,7 +90,34 @@ response = client.models.generate_content(
 raw_pcm_bytes = response.candidates[0].content.parts[0].inline_data.data
 ```
 
+### C. Pré-Análise de Conteúdo e Recomendação de Contagem
+Para sugerir temas e um número ideal de cartões de estudo a partir dos materiais de entrada (seja no fluxo interativo ou quando a contagem é omitida no modo scriptável), a pipeline utiliza uma chamada estruturada com o schema `ThemeSuggestion` e temperatura `0.1`.
+
+```python
+from google import genai
+from google.genai import types
+from anki_generator.models import ThemeSuggestion
+
+client = genai.Client()
+
+config = types.GenerateContentConfig(
+    response_mime_type="application/json",
+    response_schema=ThemeSuggestion,
+    temperature=0.1,
+)
+
+response = client.models.generate_content(
+    model="gemini-3.5-flash",
+    contents="Texto do material de estudos.",
+    config=config
+)
+
+# O atributo parsed contém a sugestão de temas e contagem validada
+suggestion = response.parsed
+```
+
 ---
+
 
 ## 4. Limites de Requisições e Erros (Rate Limits)
 
